@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X / Twitter Video Downloader</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: #16181c;
+      --border: #2f3336;
+      --accent: #1d9bf0;
+      --accent-hover: #1a8cd8;
+      --text: #e7e9ea;
+      --text-sub: #71767b;
+      --green: #00ba7c;
+      --red: #f4212e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 30px rgba(255,255,255,0.03);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header svg {
+      width: 40px;
+      height: 40px;
+      fill: #fff;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    .input-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+
+    .btn:hover { background: var(--accent-hover); }
+    .btn-green { background: var(--green); }
+    .btn-green:hover { background: #009e69; }
+    .btn-sec { background: #202327; color: var(--text); border: 1px solid var(--border); }
+    .btn-sec:hover { background: #2c3036; }
+
+    #status {
+      font-size: 13px;
+      text-align: center;
+      min-height: 20px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    .result-box {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    video {
+      width: 100%;
+      border-radius: 12px;
+      background: #000;
+      max-height: 360px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .api-selectors {
+      font-size: 11px;
+      color: var(--text-sub);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    select {
+      background: #000;
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      <h1>X / Twitter Video Extractor</h1>
+      <p>Chuyển đường dẫn bài viết X thành file Video MP4 sắc nét</p>
+    </div>
+
+    <div class="input-box">
+      <div class="input-wrapper">
+        <input type="text" id="tweetUrl" placeholder="Dán link X/Twitter (vd: https://x.com/user/status/12345)..." />
+        <button class="btn-sec" id="btnPaste">Dán</button>
+      </div>
+      <button class="btn" id="btnExtract">🚀 Tải Video</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="result-box" id="resultBox">
+      <video id="videoPreview" controls crossorigin="anonymous" playsinline></video>
+      <div class="actions">
+        <a id="btnDownload" class="btn btn-green" download="twitter_video.mp4" target="_blank">📥 Tải MP4 về máy</a>
+        <button id="btnFrameApp" class="btn btn-sec">📸 Chuyển sang Cắt Frame</button>
+      </div>
+    </div>
+
+    <div class="api-selectors">
+      <span>Cổng lấy video:</span>
+      <select id="apiSource">
+        <option value="fxtwitter">FixTwitter API (Nhanh & Sắc nét)</option>
+        <option value="vxtwitter">VxTwitter API (Dự phòng 1)</option>
+        <option value="cobalt">Cobalt API (Dự phòng 2)</option>
+      </select>
+    </div>
+  </div>
+
+  <script>
+    const tweetUrlInput = document.getElementById('tweetUrl');
+    const btnPaste = document.getElementById('btnPaste');
+    const btnExtract = document.getElementById('btnExtract');
+    const statusDiv = document.getElementById('status');
+    const resultBox = document.getElementById('resultBox');
+    const videoPreview = document.getElementById('videoPreview');
+    const btnDownload = document.getElementById('btnDownload');
+    const btnFrameApp = document.getElementById('btnFrameApp');
+    const apiSource = document.getElementById('apiSource');
+
+    let currentVideoUrl = "";
+
+    // Dán link nhanh từ Clipboard
+    btnPaste.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        tweetUrlInput.value = text;
+      } catch (e) {
+        alert("Vui lòng cho phép quyền truy cập Clipboard hoặc dán thủ công!");
+      }
+    });
+
+    // Trích xuất Status ID từ Link
+    function extractStatusId(url) {
+      const match = url.match(/status\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    btnExtract.addEventListener('click', async () => {
+      const url = tweetUrlInput.value.trim();
+      const statusId = extractStatusId(url);
+
+      if (!statusId) {
+        statusDiv.style.color = "var(--red)";
+        statusDiv.innerText = "❌ Link không hợp lệ! Hãy dán đúng link chứa status ID.";
+        return;
+      }
+
+      statusDiv.style.color = "var(--text-sub)";
+      statusDiv.innerText = "⏳ Đang kết nối server và bóc tách video MP4...";
+      resultBox.style.display = 'none';
+
+      const selectedApi = apiSource.value;
+
+      try {
+        let mp4Url = "";
+
+        if (selectedApi === "fxtwitter") {
+          const res = await fetch(`https://api.fxtwitter.com/i/status/${statusId}`);
+          const data = await res.json();
+          if (data.tweet && data.tweet.media && data.tweet.media.videos) {
+            const videos = data.tweet.media.videos;
+            // Chọn video có bitrate cao nhất
+            const best = videos.reduce((prev, curr) => (prev.bitrate > curr.bitrate) ? prev : curr);
+            mp4Url = best.url;
+          }
+        } else if (selectedApi === "vxtwitter") {
+          const res = await fetch(`https://api.vxtwitter.com/Twitter/status/${statusId}`);
+          const data = await res.json();
+          if (data.media_urls && data.media_urls.length > 0) {
+            mp4Url = data.media_urls[0];
+          }
+        } else if (selectedApi === "cobalt") {
+          const res = await fetch(`https://co.wuk.sh/api/json`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ url: url })
+          });
+          const data = await res.json();
+          if (data.url) mp4Url = data.url;
+        }
+
+        if (mp4Url) {
+          currentVideoUrl = mp4Url;
+          videoPreview.src = mp4Url;
+          btnDownload.href = mp4Url;
+          resultBox.style.display = 'flex';
+          statusDiv.style.color = "var(--green)";
+          statusDiv.innerText = "✅ Trích xuất thành công! Bạn có thể xem hoặc tải về bên dưới.";
+        } else {
+          throw new Error("Không tìm thấy đường dẫn MP4 trong bài viết.");
+        }
+
+      } catch (err) {
+        console.error(err);
+        statusDiv.style.color = "var(--red)";
+        statusDiv.innerText = "❌ Không lấy được video từ cổng này. Vui lòng đổi 'Cổng lấy video' ở dưới cùng và thử lại!";
+      }
+    });
+
+    // Mở ứng dụng Cắt Frame
+    btnFrameApp.addEventListener('click', () => {
+      if (!currentVideoUrl) return;
+      // Mở công cụ cắt frame kèm tham số URL video
+      window.open(`index.html?video=${encodeURIComponent(currentVideoUrl)}`, '_blank');
+    });
+  </script>
+</body>
+</html>
